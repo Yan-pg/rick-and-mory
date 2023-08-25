@@ -1,6 +1,21 @@
 const containerElement = document.querySelector(".container");
 const like = document.querySelector(".like");
+let likesIds = [];
 let charactersString = "";
+const idsKey = "@rickAndMortyLikes";
+
+console.log(`local`, localStorage.getItem("@rickAndMortyLikes"));
+
+function getLocalStorageItem(key) {
+  return localStorage.getItem(key) || "";
+}
+
+const ids = getLocalStorageItem(idsKey);
+
+if (ids !== "") {
+  likesIds = ids.split(",");
+  console.log(likesIds);
+}
 
 like.addEventListener("click", () => {
   changeLike();
@@ -18,7 +33,7 @@ function init() {
       return response.json();
     })
     .then((response) => {
-      const { info, results } = response;
+      const { results } = response;
       showItems(results);
     });
 }
@@ -39,11 +54,48 @@ function getSingleCharacter(id) {
     });
 }
 
+function getCharactersByIds() {
+  fetch(`https://rickandmortyapi.com/api/location/${likesIds.join()}`)
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      charactersString = "";
+
+      showItems(response);
+    });
+}
+
+function addLike(id) {
+  if (!likesIds.includes(String(id))) {
+    likesIds.push(String(id));
+
+    localStorage.setItem(idsKey, `${likesIds}`);
+
+    console.log(likesIds);
+  } else {
+    const ids = getLocalStorageItem(idsKey); // '1,2'
+
+    likesIds = ids.split(",").filter((likeId) => {
+      // ['1', '2']
+      return likeId !== String(id);
+    }); // ['1']
+
+    localStorage.setItem(idsKey, `${likesIds}`);
+
+    console.log(likesIds);
+  }
+}
+
 function showItems(characters) {
   for (let index = 0; index < characters.length; index++) {
     charactersString += `
         <button onclick="getSingleCharacter(${characters[index].id})">
           <span>${characters[index].name}</span>
+        </button>
+
+        <button onclick="addLike(${characters[index].id})">
+          like
         </button>
       `;
   }
